@@ -179,11 +179,87 @@ exports.check = function (req, res, next) {
 
     var answer = req.query.answer || "";
 
-    var result = answer.toLowerCase().trim() === req.quiz.answer.toLowerCase().trim();
+   var result = answer.toLowerCase().trim() === req.quiz.answer.toLowerCase().trim();
 
     res.render('quizzes/result', {
         quiz: req.quiz,
         result: result,
         answer: answer
+	
+    });
+};
+
+
+// GET /quizzes/randomplay
+exports.randomPlay = function (req, res, next) {
+
+    var answer = req.query.answer || '';
+    var vacio = false;
+    req.session.score = req.session.score || 0;
+    req.session.resultprevio = req.session.resultprevio || 0;
+    req.session.preguntas = req.session.preguntas || [-1];
+    var findOptions = {};
+    var opcion = {
+        id: {
+            $notIn: req.session.preguntas
+        }
+    };
+
+    models.Quiz.count({where: opcion})
+        .then(function (count) {
+            if (count === 0) {
+                vacio = true;
+            }
+            findOptions.offset = Math.floor(Math.random() * count);
+            findOptions.limit = +1;
+            findOptions.where = opcion;
+            console.log(count);
+            return models.Quiz.findAll(findOptions);
+        })
+        .then(function (quiz) {
+            if (!vacio){
+                req.session.resultprevio = req.session.score;
+                res.render('quizzes/randomplay', {
+                    quiz: quiz[0],
+                    answer: answer,
+                    score: req.session.score
+                });
+            }else {
+                var score = req.session.score;
+                req.session.preguntas = [-1];
+                req.session.score = 0;
+                req.session.resultprevio = 0;
+                res.render('quizzes/random_nomore', {
+                    score: score
+                });
+            }
+        })
+        .catch(function (error) {
+            console.log('error+ '+error);
+            next(error);
+        });
+
+};
+
+// GET /randomcheck
+exports.randomcheck = function (req, res, next) {
+
+    var answer = req.query.answer || "";
+    req.session.preguntas.push(req.quiz.id);
+
+    var result = answer.toLowerCase().trim() === req.quiz.answer.toLowerCase().trim();
+    if (result){
+        req.session.score = req.session.resultprevio + 1;
+    }else {
+        req.session.preguntas = [-1];
+        req.session.score = 0;
+        req.session.resultprevio = 0;
+    }
+
+    res.render('quizzes/random_result', {
+        quiz: req.quiz,
+        result: result,
+        answer: answer,
+        score: req.session.score
     });
 };
