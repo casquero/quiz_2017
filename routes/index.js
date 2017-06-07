@@ -46,8 +46,7 @@ router.get('/author', function (req, res, next) {
     res.render('author');
 });
 
-<<<<<<< HEAD
-=======
+
 // Pagina de ayuda
 router.get('/help', function(req, res, next) {
     res.render('help');
@@ -55,7 +54,7 @@ router.get('/help', function(req, res, next) {
 
 
 
->>>>>>> practica52
+
 
 
 // Autoload de rutas que usen :quizId
